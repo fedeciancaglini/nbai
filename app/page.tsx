@@ -1,33 +1,40 @@
-import { InfoIcon } from "lucide-react";
-import { AuthButton } from "@/components/auth-button";
-import Link from "next/link";
-import { hasEnvVars } from "@/lib/utils";
-import { EnvVarWarning } from "@/components/env-var-warning";
+"use client";
 
-export default async function Home() {
+import { Input } from "@/components/ui/input";
+import { useChat } from "@ai-sdk/react";
+import { useState } from "react";
+
+export default function Chat() {
+  const [input, setInput] = useState("");
+  const { messages, sendMessage } = useChat();
   return (
-    <main className="min-h-screen flex flex-col items-center">
-      <div className="flex-1 w-full flex flex-col gap-20 items-center">
-        <nav className="w-full flex justify-center border-b border-b-foreground/10 h-16">
-          <div className="w-full max-w-5xl flex justify-between items-center p-3 px-5 text-sm">
-            <div className="flex gap-5 items-center font-semibold">
-              <Link href={"/"}>NBAi</Link>
-            </div>
-            {!hasEnvVars ? <EnvVarWarning /> : <AuthButton />}
-          </div>
-        </nav>
-        <div className="flex-1 flex flex-col gap-20 max-w-5xl p-5">
-          <div className="flex-1 w-full flex flex-col gap-12">
-            <div className="w-full">
-              <div className="bg-accent text-sm p-3 px-5 rounded-md text-foreground flex gap-3 items-center">
-                <InfoIcon size="16" strokeWidth={2} />
-                This is a protected page that you can only see as an
-                authenticated user
-              </div>
-            </div>
-          </div>
+    <div className="flex flex-col w-full max-w-md py-24 mx-auto stretch">
+      {messages.map((message) => (
+        <div key={message.id} className="whitespace-pre-wrap">
+          {message.role === "user" ? "User: " : "AI: "}
+          {message.parts.map((part, i) => {
+            switch (part.type) {
+              case "text":
+                return <div key={`${message.id}-${i}`}>{part.text}</div>;
+            }
+          })}
         </div>
-      </div>
-    </main>
+      ))}
+
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          sendMessage({ text: input });
+          setInput("");
+        }}
+      >
+        <Input
+          className="fixed bottom-0 w-full max-w-md p-2 mb-8 border shadow-xl"
+          value={input}
+          placeholder="Say something..."
+          onChange={(e) => setInput(e.currentTarget.value)}
+        />
+      </form>
+    </div>
   );
 }
